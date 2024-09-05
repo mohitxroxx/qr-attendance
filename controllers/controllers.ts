@@ -50,7 +50,7 @@ const generate = async (req: Request, res: Response) => {
 const verify = async (req: Request, res: Response) => {
     try {
         const { encrypted } = req.body
-        if (!encrypted || req.body.length > 1)
+        if (!encrypted || typeof encrypted !== 'string' || encrypted.trim().length === 0)
             return res.status(400).json({ error: 'Encrypted string is required' })
         const decrypted = cryptr.decrypt(encrypted)
         const decryptedJSON = JSON.parse(decrypted)
