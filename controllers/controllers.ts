@@ -26,10 +26,17 @@ const generate = async (req: Request, res: Response) => {
             res.setHeader('Content-Type', 'image/png')
             if (response.data instanceof Stream) {
                 response.data.pipe(res)
-                await model.create(data)
             } else {
                 throw new Error('Response data is not a stream')
             }
+            const check = await model.findOne({
+                $and: [
+                    { studentNo },
+                    { rollNo }
+                ]
+            })
+            if (!check)
+                await model.create(data)
         } catch (error) {
             console.error('Error generating QR code:', error)
             res.status(500).send('Error generating QR code')
@@ -47,8 +54,18 @@ const verify = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Encrypted string is required' })
         const decrypted = cryptr.decrypt(encrypted)
         const decryptedJSON = JSON.parse(decrypted)
-        const studentNoCheck = await model.findOneAndUpdate({ studentNo: decryptedJSON.studentNo, rollNo: decryptedJSON.rollNo },{present:true},{new:true})
+
+        const check = await model.findOne({
+            $and: [
+                { studentNo: decryptedJSON.studentNo },
+                { rollNo: decryptedJSON.rollNo }
+            ]
+        })
+        if(check.present)
+            return res.status(200).json({ msg: 'Present already Marked' })
         // console.log(studentNoCheck)
+        check.present=true
+        check.save()
         return res.status(200).json({ msg: 'Present Marked' })
     } catch (error) {
         console.error(error)
