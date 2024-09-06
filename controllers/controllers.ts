@@ -18,6 +18,17 @@ const generate = async (req: Request, res: Response) => {
         const encryptedString = cryptr.encrypt(JSON.stringify(data))
         console.log(encryptedString)
         try {
+            const check = await model.findOne({
+                $and: [
+                    { studentNo },
+                    { rollNo }
+                ]
+            })
+            if (!check)
+                await model.create(data)
+            if (check)
+                return res.status(200).json({ msg: 'Student Already exist' })
+            
             const response = await axios({
                 method: 'get',
                 url: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encryptedString}`,
@@ -29,14 +40,6 @@ const generate = async (req: Request, res: Response) => {
             } else {
                 throw new Error('Response data is not a stream')
             }
-            const check = await model.findOne({
-                $and: [
-                    { studentNo },
-                    { rollNo }
-                ]
-            })
-            if (!check)
-                await model.create(data)
         } catch (error) {
             console.error('Error generating QR code:', error)
             res.status(500).send('Error generating QR code')
