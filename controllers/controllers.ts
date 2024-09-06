@@ -15,11 +15,23 @@ const generate = async (req: Request, res: Response) => {
         const data = {
             ...req.body
         }
-        const encryptedString = cryptr.encrypt(JSON.stringify(data))
+        let encryptedString = cryptr.encrypt(JSON.stringify(data));
+
+        encryptedString = encryptedString.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
         console.log(encryptedString)
         try {
+            const decryptedString = cryptr.decrypt(encryptedString);
+            const decryptedData = JSON.parse(decryptedString);
+            console.log('Decrypted:', decryptedData);
+        } catch (error) {
+            console.error('Decryption failed:', error);
+        }
+
+
+        try {
             const check = await model.findOne({
-                $and: [
+                $or: [
                     { studentNo },
                     { rollNo }
                 ]
@@ -28,7 +40,7 @@ const generate = async (req: Request, res: Response) => {
                 await model.create(data)
             if (check)
                 return res.status(200).json({ msg: 'Student Already exist' })
-            
+
             const response = await axios({
                 method: 'get',
                 url: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encryptedString}`,
@@ -52,11 +64,28 @@ const generate = async (req: Request, res: Response) => {
 
 const verify = async (req: Request, res: Response) => {
     try {
-        const { encrypted } = req.body
+        let { encrypted } = req.body
         if (!encrypted || typeof encrypted !== 'string' || encrypted.trim().length === 0)
             return res.status(400).json({ error: 'Encrypted string is required' })
-        const decrypted = cryptr.decrypt(encrypted)
-        const decryptedJSON = JSON.parse(decrypted)
+        console.log(encrypted)
+
+ // Replace URL-safe characters back to original
+ 
+         encrypted = encrypted.replace(/-/g, '+').replace(/_/g, '/');
+
+         console.log(encrypted);
+
+      let decrypted;
+     try {
+     decrypted = cryptr.decrypt(encrypted);
+     } catch (decryptionError) {
+     console.error('Decryption error:', decryptionError);
+     return res.status(500).json({ error: 'Failed to decrypt the data' });
+       }
+
+ console.log('Decrypted data:', decrypted);
+ const decryptedJSON = JSON.parse(decrypted);
+ console.log('Parsed decrypted JSON:', decryptedJSON);
 
         const check = await model.findOne({
             $and: [
