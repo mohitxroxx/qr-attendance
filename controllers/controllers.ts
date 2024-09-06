@@ -94,14 +94,14 @@ const verify = async (req: Request, res: Response) => {
             ]
         })
         if(check.present)
-            return res.status(200).json({ msg: 'Present already Marked' })
+            return res.status(200).json({ msg: 'Present already Marked 😵‍💫' })
         // console.log(studentNoCheck)
         check.present=true
         check.save()
-        return res.status(200).json({ msg: 'Present Marked' })
+        return res.status(200).json({ msg: 'Present Marked ✅' })
     } catch (error) {
         console.error(error)
-        return res.status(500).json({ error: 'Error occured while marking attendance' })
+        return res.status(500).json({ error: 'Error occured while marking attendance ❌' })
     }
 }
 
