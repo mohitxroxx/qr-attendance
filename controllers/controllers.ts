@@ -80,7 +80,7 @@ const verify = async (req: Request, res: Response) => {
      decrypted = cryptr.decrypt(encrypted);
      } catch (decryptionError) {
      console.error('Decryption error:', decryptionError);
-     return res.status(500).json({ error: 'Failed to decrypt the data' });
+     return res.status(500).json({ error: 'Failed to decrypt the data 📛' });
        }
 
  console.log('Decrypted data:', decrypted);
@@ -105,7 +105,32 @@ const verify = async (req: Request, res: Response) => {
     }
 }
 
+const manualVerify = async(req: Request, res: Response) => {
+
+    try {
+        const { rollNo, studentNo } = req.body
+        if (!rollNo || !studentNo)
+            return res.status(400).json({ error: 'Roll No and Student No are required 🗿 ' })
+        const check = await model.findOne({
+            $and: [
+                { studentNo },
+                { rollNo }
+            ]
+        })
+        if (!check)
+            return res.status(404).json({ error: 'Student not found 🚫' })
+        if(check.present)
+            return res.status(200).json({ msg: 'Present already Marked 😵‍💫' })
+        check.present=true
+        check.save()
+        return res.status(200).json({ msg: 'Present Marked ✅' })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ error: 'Error occured while marking attendance ❌' })
+    }
+}
 
 
-export default { generate, verify }
+
+export default { generate, verify, manualVerify }
 
