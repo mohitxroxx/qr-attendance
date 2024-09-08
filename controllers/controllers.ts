@@ -98,7 +98,9 @@ const verify = async (req: Request, res: Response) => {
         // console.log(studentNoCheck)
         check.present=true
         check.save()
-        return res.status(200).json({ msg: 'Present Marked ✅' })
+        return res.status(200).json({
+            msg: `Present Marked ✅: ${check.name}, ${check.branch}, ${check.section}`
+        });
     } catch (error) {
         console.error(error)
         return res.status(500).json({ error: 'Error occured while marking attendance ❌' })
@@ -123,7 +125,9 @@ const manualVerify = async(req: Request, res: Response) => {
             return res.status(200).json({ msg: 'Present already Marked 😵‍💫' })
         check.present=true
         check.save()
-        return res.status(200).json({ msg: 'Present Marked ✅' })
+        return res.status(200).json({
+            msg: `Present Marked ✅: ${check.name}, ${check.branch}, ${check.section}`
+        });
     } catch (error) {
         console.error(error)
         return res.status(500).json({ error: 'Error occured while marking attendance ❌' })
