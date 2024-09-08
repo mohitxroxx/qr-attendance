@@ -94,12 +94,14 @@ const verify = async (req: Request, res: Response) => {
             ]
         })
         if(check.present)
-            return res.status(200).json({ msg: 'Present already Marked 😵‍💫' })
+            return res.status(200).json({
+               msg: `Present already Marked 😵‍💫 \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
+             })
         // console.log(studentNoCheck)
         check.present=true
         check.save()
         return res.status(200).json({
-            msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} " " ${check.section}\nstudentNo: ${check.studentNo}`
+            msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
         });
     } catch (error) {
         console.error(error)
@@ -122,11 +124,13 @@ const manualVerify = async(req: Request, res: Response) => {
         if (!check)
             return res.status(404).json({ error: 'Student not found 🚫' })
         if(check.present)
-            return res.status(200).json({ msg: 'Present already Marked 😵‍💫' })
+            return res.status(200).json({
+                msg: `Present already Marked 😵‍💫 \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
+              })
         check.present=true
         check.save()
         return res.status(200).json({
-            msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} " " ${check.section}\nstudentNo: ${check.studentNo}`
+            msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
         });
     } catch (error) {
         console.error(error)
