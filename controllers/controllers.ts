@@ -99,7 +99,7 @@ const verify = async (req: Request, res: Response) => {
         check.present=true
         check.save()
         return res.status(200).json({
-            msg: `Present Marked ✅:\nName: ${check.name}\nBranch: ${check.branch}\nSection: ${check.section}`
+            msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} " " ${check.section}\nstudentNo: ${check.studentNo}`
         });
     } catch (error) {
         console.error(error)
@@ -126,7 +126,7 @@ const manualVerify = async(req: Request, res: Response) => {
         check.present=true
         check.save()
         return res.status(200).json({
-            msg: `Present Marked ✅:\nName: ${check.name}\nBranch: ${check.branch}\nSection: ${check.section}`
+            msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} " " ${check.section}\nstudentNo: ${check.studentNo}`
         });
     } catch (error) {
         console.error(error)
