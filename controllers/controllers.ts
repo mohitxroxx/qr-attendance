@@ -3,9 +3,16 @@ import Cryptr from "cryptr"
 import axios from "axios"
 import { Stream } from 'stream'
 import model from "../models/model"
+import { v2 as cloudinary } from 'cloudinary'
+import 'dotenv/config'
 
 const cryptr = new Cryptr(process.env.SecretKey, { encoding: 'base64', pbkdf2Iterations: 10000, saltLength: 30 })
 
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
 
 const generate = async (req: Request, res: Response) => {
     try {
@@ -19,11 +26,11 @@ const generate = async (req: Request, res: Response) => {
 
         encryptedString = encryptedString.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 
-        console.log(encryptedString)
+        // console.log(encryptedString)
         try {
             const decryptedString = cryptr.decrypt(encryptedString);
             const decryptedData = JSON.parse(decryptedString);
-            console.log('Decrypted:', decryptedData);
+            // console.log('Decrypted:', decryptedData);
         } catch (error) {
             console.error('Decryption failed:', error);
         }
@@ -38,19 +45,30 @@ const generate = async (req: Request, res: Response) => {
             })
             if (!check)
                 await model.create(data)
-            if (check)
-                return res.status(200).json({ msg: 'Student Already exist' })
+                if (check)
+                    return res.status(200).json({ msg: 'Student Already exist' })
 
             const response = await axios({
                 method: 'get',
                 url: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encryptedString}`,
                 responseType: 'stream'
             })
-            res.setHeader('Content-Type', 'image/png')
+            // res.setHeader('Content-Type', 'image/png')
             if (response.data instanceof Stream) {
-                response.data.pipe(res)
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    { folder: "qr_codes" },
+                    (error, result) => {
+                        if (error) {
+                            console.error('Error uploading:', error);
+                            return res.status(500).send('Error uploading to Cloudinary');
+                        }
+                        res.status(200).json({ url: result.url })
+                    }
+                );
+                    // console.log(uploadStream)
+                response.data.pipe(uploadStream);
             } else {
-                throw new Error('Response data is not a stream')
+                throw new Error('Response data is not a stream');
             }
         } catch (error) {
             console.error('Error generating QR code:', error)
@@ -69,23 +87,23 @@ const verify = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Encrypted string is required' })
         console.log(encrypted)
 
- // Replace URL-safe characters back to original
- 
-         encrypted = encrypted.replace(/-/g, '+').replace(/_/g, '/');
+        // Replace URL-safe characters back to original
 
-         console.log(encrypted);
+        encrypted = encrypted.replace(/-/g, '+').replace(/_/g, '/');
 
-      let decrypted;
-     try {
-     decrypted = cryptr.decrypt(encrypted);
-     } catch (decryptionError) {
-     console.error('Decryption error:', decryptionError);
-     return res.status(500).json({ error: 'Failed to decrypt the data 📛' });
-       }
+        console.log(encrypted);
 
- console.log('Decrypted data:', decrypted);
- const decryptedJSON = JSON.parse(decrypted);
- console.log('Parsed decrypted JSON:', decryptedJSON);
+        let decrypted;
+        try {
+            decrypted = cryptr.decrypt(encrypted);
+        } catch (decryptionError) {
+            console.error('Decryption error:', decryptionError);
+            return res.status(500).json({ error: 'Failed to decrypt the data 📛' });
+        }
+
+        console.log('Decrypted data:', decrypted);
+        const decryptedJSON = JSON.parse(decrypted);
+        console.log('Parsed decrypted JSON:', decryptedJSON);
 
         const check = await model.findOne({
             $and: [
@@ -93,12 +111,12 @@ const verify = async (req: Request, res: Response) => {
                 { rollNo: decryptedJSON.rollNo }
             ]
         })
-        if(check.present)
+        if (check.present)
             return res.status(200).json({
-               msg: `Present already Marked 😵‍💫 \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
-             })
+                msg: `Present already Marked 😵‍💫 \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
+            })
         // console.log(studentNoCheck)
-        check.present=true
+        check.present = true
         check.save()
         return res.status(200).json({
             msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
@@ -109,7 +127,7 @@ const verify = async (req: Request, res: Response) => {
     }
 }
 
-const manualVerify = async(req: Request, res: Response) => {
+const manualVerify = async (req: Request, res: Response) => {
 
     try {
         const { rollNo, studentNo } = req.body
@@ -123,11 +141,11 @@ const manualVerify = async(req: Request, res: Response) => {
         })
         if (!check)
             return res.status(404).json({ error: 'Student not found 🚫' })
-        if(check.present)
+        if (check.present)
             return res.status(200).json({
                 msg: `Present already Marked 😵‍💫 \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
-              })
-        check.present=true
+            })
+        check.present = true
         check.save()
         return res.status(200).json({
             msg: `Present Marked ✅ \nName: ${check.name}\nBranch: ${check.branch} ${check.section}\nstudentNo: ${check.studentNo}`
